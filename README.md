@@ -4,7 +4,7 @@ A full-featured real-time collaborative programming environment built using Next
 Users can collaborate on code, chat, talk, run programs, and access AI help — all inside the browser.
 
 
-############
+#####################
 
 
 
@@ -15,7 +15,7 @@ Users can collaborate on code, chat, talk, run programs, and access AI help — 
 </p>
 
 
-#######################3
+#######################
 
 
 
