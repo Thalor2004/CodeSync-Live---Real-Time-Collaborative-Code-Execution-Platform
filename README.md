@@ -1,36 +1,146 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+CodeSync Live – Real-Time Collaborative Code Editor
 
-## Getting Started
+A full-featured real-time collaborative programming environment built using Next.js, Firebase, WebRTC, CodeMirror, Judge0, and AI-powered assistance.
+Users can collaborate on code, chat, talk, run programs, and access AI help — all inside the browser.
 
-First, run the development server:
+🚀 Features
+✅ Real-Time Code Collaboration
 
-```bash
+Multi-user editing with instant synchronization
+
+Multi-file support (create, delete, switch files)
+
+CodeMirror editor with syntax highlighting (Python, C++, JavaScript)
+
+🧠 AI Coding Assistant
+
+Explains code
+
+Detects bugs
+
+Suggests improvements
+
+Helps understand errors
+
+Powered by Groq/OpenAI API
+
+💬 Communication Tools
+
+Real-time chat (text)
+
+Voice chat using WebRTC
+
+Typing indicators and user presence badges
+
+▶️ Code Execution
+
+Run Python, C++, and JavaScript from the browser
+
+Sandboxed execution using the Judge0 API
+
+See output/errors instantly
+
+🗂 Version History
+
+Save snapshots of all files
+
+Restore any previous version
+
+Track contributions (who saved the snapshot & when)
+
+🔐 Room Security
+
+Public or private rooms
+
+Password-protected access
+
+Unique room URLs for sharing
+
+🛠 Tech Stack
+Layer	Technology
+Frontend	Next.js 16, React, TailwindCSS
+Realtime Sync	Firebase Realtime Database
+Editor	CodeMirror 6
+Code Execution	Judge0 API
+AI	Groq/OpenAI API
+Voice Chat	WebRTC (peer-to-peer)
+
+
+📦 Installation
+1️⃣ Clone the repository:
+git clone https://github.com/your-username/codesync-live.git
+cd codesync-live
+
+2️⃣ Install dependencies:
+npm install
+
+3️⃣ Create .env.local in the project root:
+NEXT_PUBLIC_FIREBASE_API_KEY=your_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_domain
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=your_db
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_id
+
+GROQ_API_KEY=your_groq_api_key
+JUDGE0_API_KEY=your_judge0_key
+
+4️⃣ Start the dev server:
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Your app will be available at:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+http://localhost:3000
 
-## Learn More
+🧪 Usage
+Create a room
 
-To learn more about Next.js, take a look at the following resources:
+Open the homepage
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Enter a room ID or create a random one
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Collaborate
 
-## Deploy on Vercel
+Share the room link
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+All participants see live file changes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Chat or talk using built-in voice chat
+
+Ask AI
+
+Click Ask AI → The assistant analyzes the open file and gives suggestions.
+
+Run Code
+
+Click Run → Output is shown instantly using Judge0.
+
+Use Version History
+
+Click Save Snapshot
+
+Restore any saved version anytime
+
+🧱 Project Structure
+app/
+  room/[id]/
+    page.tsx      # Main editor UI
+  api/
+    run/route.ts  # Judge0 runner
+    ai/route.ts   # AI assistant
+lib/
+  firebase.ts     # Firebase config
+public/
+styles/
+
+🤝 Contributing
+
+Contributions are welcome!
+If you'd like to improve the UI, add themes, new languages, or better AI tools — feel free to submit a pull request.
+
+📄 License
+
+MIT License.
+You are free to use, modify, and distribute this project.
