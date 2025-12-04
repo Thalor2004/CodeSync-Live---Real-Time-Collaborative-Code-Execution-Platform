@@ -3,11 +3,19 @@ CodeSync Live – Real-Time Collaborative Code Editor
 A full-featured real-time collaborative programming environment built using Next.js, Firebase, WebRTC, CodeMirror, Judge0, and AI-powered assistance.
 Users can collaborate on code, chat, talk, run programs, and access AI help — all inside the browser.
 
+
+
+
+
+
 <p align="center">
   <a href="https://codesync-lsg5o3mee-thalor2004s-projects.vercel.app" target="_blank">
     <img src="https://img.shields.io/badge/RUN%20APP-1E90FF?style=for-the-badge&logo=play&logoColor=white" />
   </a>
 </p>
+
+
+
 
 
 
