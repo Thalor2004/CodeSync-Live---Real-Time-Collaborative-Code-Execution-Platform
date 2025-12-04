@@ -4,10 +4,11 @@ A full-featured real-time collaborative programming environment built using Next
 Users can collaborate on code, chat, talk, run programs, and access AI help — all inside the browser.
 
 <p align="center">
-  <a href="codesync-lsg5o3mee-thalor2004s-projects.vercel.app" target="_blank">
-    <img src="https://img.shields.io/badge/▶ Run App-000000?style=for-the-badge&logo=vercel&logoColor=white" />
+  <a href="https://codesync-lsg5o3mee-thalor2004s-projects.vercel.app" target="_blank">
+    <img src="https://img.shields.io/badge/RUN%20APP-1E90FF?style=for-the-badge&logo=play&logoColor=white" />
   </a>
 </p>
+
 
 
 
