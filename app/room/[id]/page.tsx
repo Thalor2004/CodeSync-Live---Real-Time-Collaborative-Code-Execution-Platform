@@ -242,103 +242,232 @@ export default function RoomPage() {
 // VOICE CHAT (JOIN / LEAVE CALL)
 // ===============================
 
-const cleanupCall = () => {
-  setInCall(false);
-  setCallStatus("Not in call");
+    // ===============================
+// VOICE CHAT (CORRECT WORKING VERSION)
+// ===============================
 
-  if (pcRef.current) {
-    pcRef.current.onicecandidate = null;
-    pcRef.current.ontrack = null;
-    pcRef.current.close();
-    pcRef.current = null;
-  }
+      const cleanupCall = () => {
+        setInCall(false);
+        setCallStatus("Not in call");
 
-  if (localStreamRef.current) {
-    localStreamRef.current.getTracks().forEach((t) => t.stop());
-    localStreamRef.current = null;
-  }
-};
-
-const joinCall = async () => {
-  if (!roomId || !authorized) return;
-  if (inCall) return;
-
-  try {
-    setCallStatus("Connecting...");
-
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    });
-    pcRef.current = pc;
-
-    pc.ontrack = (event) => {
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = event.streams[0];
-      }
-    };
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        const candRef = ref(db, `rooms/${roomId}/call/candidates/${userId.current}`);
-        push(candRef, event.candidate.toJSON());
-      }
-    };
-
-    const localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    localStreamRef.current = localStream;
-    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
-
-    const callRef = ref(db, `rooms/${roomId}/call`);
-    const callSnap = await get(callRef);
-    const callData = callSnap.val();
-
-    if (!callData?.offer) {
-      // Caller
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      await set(ref(db, `rooms/${roomId}/call/offer`), offer);
-      setCallStatus("Waiting for answer...");
-
-      const answerRef = ref(db, `rooms/${roomId}/call/answer`);
-      onValue(answerRef, async (snap) => {
-        const answer = snap.val();
-        if (!answer) return;
-
-        if (!pc.currentRemoteDescription) {
-          await pc.setRemoteDescription(new RTCSessionDescription(answer));
-          setCallStatus("In call");
+        if (pcRef.current) {
+          pcRef.current.onicecandidate = null;
+          pcRef.current.ontrack = null;
+          pcRef.current.close();
+          pcRef.current = null;
         }
-      });
-    } else {
-      // Callee
-      await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      await set(ref(db, `rooms/${roomId}/call/answer`), answer);
-      setCallStatus("In call");
-    }
 
-    const candidatesRef = ref(db, `rooms/${roomId}/call/candidates`);
-    onChildAdded(candidatesRef, async (snap) => {
-      const data = snap.val();
-      if (!pcRef.current) return;
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach((t) => t.stop());
+          localStreamRef.current = null;
+        }
+      };
 
-      try {
-        await pcRef.current.addIceCandidate(new RTCIceCandidate(data));
-      } catch {}
-    });
+      const joinCall = async () => {
+        if (!roomId || !authorized) return;
+        if (inCall) return;
 
-    setInCall(true);
-  } catch (err) {
-    console.error(err);
-    setCallStatus("Error");
-    cleanupCall();
-  }
-};
+        try {
+          setCallStatus("Connecting...");
 
-const leaveCall = () => {
-  cleanupCall();
-};
+          const pc = new RTCPeerConnection({
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+          });
+          pcRef.current = pc;
+
+          // remote audio
+          pc.ontrack = (event) => {
+            if (remoteAudioRef.current) {
+              remoteAudioRef.current.srcObject = event.streams[0];
+            }
+          };
+
+          // send ICE candidates
+          pc.onicecandidate = (event) => {
+            if (!event.candidate) return;
+            const candRef = ref(
+              db,
+              `rooms/${roomId}/call/candidates/${userId.current}`
+            );
+            const newRef = push(candRef);
+            set(newRef, event.candidate.toJSON());
+          };
+
+          // local mic
+          const localStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          localStreamRef.current = localStream;
+          localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+
+          // call negotiation
+          const callRef = ref(db, `rooms/${roomId}/call`);
+          const callSnap = await get(callRef);
+          const callData = callSnap.val();
+
+          if (!callData || !callData.offer) {
+            // caller
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            await set(ref(db, `rooms/${roomId}/call/offer`), offer);
+            setCallStatus("Waiting for answer...");
+
+            const answerRef = ref(db, `rooms/${roomId}/call/answer`);
+            onValue(answerRef, async (snap) => {
+              const answer = snap.val();
+              if (!answer) return;
+
+              if (!pc.currentRemoteDescription) {
+                await pc.setRemoteDescription(
+                  new RTCSessionDescription(answer)
+                );
+                setCallStatus("In call");
+              }
+            });
+          } else {
+            // callee
+            const offerDesc = new RTCSessionDescription(callData.offer);
+            await pc.setRemoteDescription(offerDesc);
+
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            await set(ref(db, `rooms/${roomId}/call/answer`), answer);
+
+            setCallStatus("In call");
+          }
+
+          // receive remote candidates
+          const candidatesRef = ref(db, `rooms/${roomId}/call/candidates`);
+          onChildAdded(candidatesRef, async (snap) => {
+            const data = snap.val();
+            if (!data) return;
+
+            const addCandidate = async (c: any) => {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(c));
+              } catch (e) {
+                console.warn("Error adding candidate", e);
+              }
+            };
+
+            if (data.candidate || data.sdpMid) {
+              await addCandidate(data);
+            } else {
+              Object.values<any>(data).forEach((inner) => {
+                if (inner.candidate || inner.sdpMid) addCandidate(inner);
+              });
+            }
+          });
+
+          setInCall(true);
+        } catch (err) {
+          console.error("Error joining call", err);
+          setCallStatus("Error");
+          cleanupCall();
+        }
+      };
+
+      const leaveCall = () => cleanupCall();
+
+
+
+// const cleanupCall = () => {
+//   setInCall(false);
+//   setCallStatus("Not in call");
+
+//   if (pcRef.current) {
+//     pcRef.current.onicecandidate = null;
+//     pcRef.current.ontrack = null;
+//     pcRef.current.close();
+//     pcRef.current = null;
+//   }
+
+//   if (localStreamRef.current) {
+//     localStreamRef.current.getTracks().forEach((t) => t.stop());
+//     localStreamRef.current = null;
+//   }
+// };
+
+// const joinCall = async () => {
+//   if (!roomId || !authorized) return;
+//   if (inCall) return;
+
+//   try {
+//     setCallStatus("Connecting...");
+
+//     const pc = new RTCPeerConnection({
+//       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+//     });
+//     pcRef.current = pc;
+
+//     pc.ontrack = (event) => {
+//       if (remoteAudioRef.current) {
+//         remoteAudioRef.current.srcObject = event.streams[0];
+//       }
+//     };
+
+//     pc.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         const candRef = ref(db, `rooms/${roomId}/call/candidates/${userId.current}`);
+//         push(candRef, event.candidate.toJSON());
+//       }
+//     };
+
+//     const localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//     localStreamRef.current = localStream;
+//     localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+
+//     const callRef = ref(db, `rooms/${roomId}/call`);
+//     const callSnap = await get(callRef);
+//     const callData = callSnap.val();
+
+//     if (!callData?.offer) {
+//       // Caller
+//       const offer = await pc.createOffer();
+//       await pc.setLocalDescription(offer);
+//       await set(ref(db, `rooms/${roomId}/call/offer`), offer);
+//       setCallStatus("Waiting for answer...");
+
+//       const answerRef = ref(db, `rooms/${roomId}/call/answer`);
+//       onValue(answerRef, async (snap) => {
+//         const answer = snap.val();
+//         if (!answer) return;
+
+//         if (!pc.currentRemoteDescription) {
+//           await pc.setRemoteDescription(new RTCSessionDescription(answer));
+//           setCallStatus("In call");
+//         }
+//       });
+//     } else {
+//       // Callee
+//       await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
+//       const answer = await pc.createAnswer();
+//       await pc.setLocalDescription(answer);
+//       await set(ref(db, `rooms/${roomId}/call/answer`), answer);
+//       setCallStatus("In call");
+//     }
+
+//     const candidatesRef = ref(db, `rooms/${roomId}/call/candidates`);
+//     onChildAdded(candidatesRef, async (snap) => {
+//       const data = snap.val();
+//       if (!pcRef.current) return;
+
+//       try {
+//         await pcRef.current.addIceCandidate(new RTCIceCandidate(data));
+//       } catch {}
+//     });
+
+//     setInCall(true);
+//   } catch (err) {
+//     console.error(err);
+//     setCallStatus("Error");
+//     cleanupCall();
+//   }
+// };
+
+// const leaveCall = () => {
+//   cleanupCall();
+// };
 
 
 
@@ -627,8 +756,38 @@ const leaveCall = () => {
               </div>
             </section>
 
+                {/* Voice Chat */}
+                <section className="bg-white text-black rounded-lg shadow p-3 border">
+                  <div className="flex justify-between mb-2">
+                    <h2 className="font-semibold">Voice Chat</h2>
+                    <span className="text-xs text-gray-600">{callStatus}</span>
+                  </div>
+
+                  <div className="flex gap-2 mb-2">
+                    {!inCall ? (
+                      <button
+                        className="px-3 py-1 border rounded"
+                        onClick={joinCall}
+                      >
+                        Join
+                      </button>
+                    ) : (
+                      <button
+                        className="px-3 py-1 border rounded"
+                        onClick={leaveCall}
+                      >
+                        Leave
+                      </button>
+                    )}
+                  </div>
+
+                  <audio ref={remoteAudioRef} autoPlay />
+                </section>
+
+
+
             {/* Voice Chat */}
-            <section className="bg-white text-black rounded-lg shadow p-3 border">
+            {/* <section className="bg-white text-black rounded-lg shadow p-3 border">
               <div className="flex justify-between mb-2">
                 <h2 className="font-semibold">Voice Chat</h2>
                 <span className="text-xs text-gray-600">{callStatus}</span>
@@ -646,7 +805,7 @@ const leaveCall = () => {
                 )}
               </div>
               <audio ref={remoteAudioRef} autoPlay />
-            </section>
+            </section> */}
 
             {/* Chat */}
             <section className="bg-white text-black rounded-lg shadow p-3 border flex flex-col flex-1">
