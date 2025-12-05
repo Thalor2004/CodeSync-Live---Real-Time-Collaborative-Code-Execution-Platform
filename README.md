@@ -9,7 +9,7 @@ Users can collaborate on code, chat, talk, run programs, and access AI help — 
 
 
 <p align="center">
-  <a href="codesyncproject.vercel.app" target="_blank">
+  <a href="https://codesyncproject.vercel.app" target="_blank">
     <img src="https://img.shields.io/badge/RUN%20APP-1E90FF?style=for-the-badge&logo=play&logoColor=white" />
   </a>
 </p>
